@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    img {
+      width: 100px;
+    }
+    body {
+      background-color: black;
+    }
+    .char {
+      flex-shrink: 0;
+      width: 1em;
+      height: 1em
+    }
+    .line {
+      display: flex;
+    }
+    #ascii {
+      display: flex;
+      flex-direction: column;
+      background-color: black;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <input type="range" min="2" max="16" id="range" value="16">
+  <video autoplay id="video" style="display: none;"></video>
+  <div id="ascii"></div>
+</body>
+
+<script src="./index.js"></script>
+<script src="./charlist/braille.js"></script>
+<script src="./Char.js"></script>
+<script src="./Ascii.js"></script>
+<script>
+  const video = document.getElementById('video')
+  const responsive = [
+    '0.15em',
+    '0.28em',
+    '0.35em',
+    '0.43em',
+    '0.5em',
+    '0.6em',
+    '0.7em',
+    '0.8em',
+    '0.85em',
+    '0.95em',
+    '1em',
+    '1.1em',
+    '1.2em',
+    '1.3em',
+    '1.4em',
+  ]
+  ;(async _ => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      const stream = await getCamera()
+      video.srcObject = stream
+      const { width, height } = stream.getVideoTracks()[0].getSettings()
+      const ratio = document.getElementById('range').value
+      const ascii = new Ascii(width / ratio, height / ratio)
+      document.getElementById('ascii').style.fontSize = responsive[ratio - 2]
+
+      document.getElementById('range').oninput = function() {
+        document.getElementById('ascii').style.fontSize = responsive[this.value - 2]
+        if(this.value )
+        ascii.changeSize(width / this.value, height / this.value)
+      }
+      launch(ascii)
+    } else {
+      return console.log('not supported')
+    }
+  })().catch(console.error())
+</script>
+
+</html>
