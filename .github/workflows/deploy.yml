@@ -15,7 +15,7 @@ jobs:
       run: echo ::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF:10})
 
     - name: Publish to Registry
-      uses: elgohr/Publish-Docker-Github-Action@master
+      uses: elgohr/Publish-Docker-Github-Action@v5
       with:
         name: clabroche/docker-registry/asciicam
         username: ${{ secrets.DOCKER_HUB_USER }}
