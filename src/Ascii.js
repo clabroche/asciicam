@@ -40,7 +40,7 @@ class Ascii {
   constructor(canvas, video) {
     this.canvas = canvas
     this.video = video
-    const gl = this.gl = canvas.getContext('webgl', { antialias: false, alpha: false })
+    const gl = this.gl = canvas.getContext('webgl', { antialias: false, alpha: false, desynchronized: true })
     if (!gl) throw new Error('WebGL non supporté')
 
     // Glyphes distincts et correspondance niveau -> glyphe
