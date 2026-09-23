@@ -1,4 +1,8 @@
 node_modules
+.git
+.github
+.runeya
+.playwright-mcp
 .dockerignore
 docker-compose.yml
 Dockerfile

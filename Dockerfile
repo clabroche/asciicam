@@ -1,16 +1,15 @@
-FROM alpine:3.11 as builder
-RUN apk --no-cache add gcc g++ make python nodejs npm
+FROM node:22-alpine
 
+ENV NODE_ENV=production
 WORKDIR /asciicam
-COPY package-lock.json ./package-lock.json
-COPY package.json ./package.json
-RUN npm ci
-COPY . .
 
-FROM alpine:3.11
-RUN apk --no-cache add nodejs
-WORKDIR /asciicam
-RUN mkdir /asciicam/dist
-COPY --from=builder /asciicam .
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
 
+COPY server.js ./
+COPY src ./src
+
+USER node
+EXPOSE 2525
+HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://127.0.0.1:2525/ >/dev/null || exit 1
 CMD ["node", "server.js"]
