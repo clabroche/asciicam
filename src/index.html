@@ -8,8 +8,18 @@
     img {
       width: 100px;
     }
-    body {
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       background-color: black;
+    }
+    #range {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      z-index: 1;
     }
     .char {
       flex-shrink: 0;
@@ -21,6 +31,7 @@
     }
     #ascii {
       display: flex;
+      line-height: 1;
       flex-direction: column;
       background-color: black;
       color: white;
@@ -39,42 +50,38 @@
 <script src="./Ascii.js"></script>
 <script>
   const video = document.getElementById('video')
-  const responsive = [
-    '0.15em',
-    '0.28em',
-    '0.35em',
-    '0.43em',
-    '0.5em',
-    '0.6em',
-    '0.7em',
-    '0.8em',
-    '0.85em',
-    '0.95em',
-    '1em',
-    '1.1em',
-    '1.2em',
-    '1.3em',
-    '1.4em',
-  ]
+  const range = document.getElementById('range')
+  const asciiDiv = document.getElementById('ascii')
+
+  // Taille d'un caractère en px selon le curseur, et grille qui couvre tout le viewport
+  function gridSize() {
+    const size = Number(range.value)
+    return {
+      size,
+      cols: Math.ceil(window.innerWidth / size),
+      rows: Math.ceil(window.innerHeight / size),
+    }
+  }
+
   ;(async _ => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      const stream = await getCamera()
-      video.srcObject = stream
-      const { width, height } = stream.getVideoTracks()[0].getSettings()
-      const ratio = document.getElementById('range').value
-      const ascii = new Ascii(width / ratio, height / ratio)
-      document.getElementById('ascii').style.fontSize = responsive[ratio - 2]
+      video.srcObject = await getCamera()
+      let { size, cols, rows } = gridSize()
+      asciiDiv.style.fontSize = size + 'px'
+      const ascii = new Ascii(cols, rows)
 
-      document.getElementById('range').oninput = function() {
-        document.getElementById('ascii').style.fontSize = responsive[this.value - 2]
-        if(this.value )
-        ascii.changeSize(width / this.value, height / this.value)
+      function resize() {
+        ;({ size, cols, rows } = gridSize())
+        asciiDiv.style.fontSize = size + 'px'
+        if (cols !== ascii.width || rows !== ascii.height) ascii.changeSize(cols, rows)
       }
+      range.oninput = resize
+      window.addEventListener('resize', resize)
       launch(ascii)
     } else {
       return console.log('not supported')
     }
-  })().catch(console.error())
+  })().catch(console.error)
 </script>
 
 </html>

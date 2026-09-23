@@ -10,7 +10,7 @@ class Char {
   }
   update(color) {
     const collection = braille
-    const index = (color * collection.length) / 255
+    const index = Math.min((color * collection.length) / 255, collection.length - 1)
     const char = collection[Math.floor(index)]
     this.oldColor = color
     if (char !== this.oldChar) {

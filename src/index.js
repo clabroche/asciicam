@@ -12,7 +12,14 @@ function compute(list) {
   const h = list.height
   virtualCanvas.width = w
   virtualCanvas.height = h
-  ctx.drawImage(video, 0, 0, w, h);
+  // Recadrage façon "object-fit: cover" pour garder les proportions de la caméra
+  const vw = video.videoWidth
+  const vh = video.videoHeight
+  if (!vw || !vh) return
+  const scale = Math.max(w / vw, h / vh)
+  const sw = w / scale
+  const sh = h / scale
+  ctx.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, w, h);
   const imageData = ctx.getImageData(0, 0, w, h);
   var data = imageData.data;
   for (let y = 0; y < h; y++) {
