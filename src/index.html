@@ -1,77 +1,498 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Ascii Cam</title>
   <style>
-    img {
-      width: 100px;
+    :root {
+      --bg: black;
+      --panel: rgba(18, 18, 20, 0.78);
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #f2f2f2;
+      --muted: #9a9aa2;
+      --accent: #7cf29a;
+      --control: rgba(255, 255, 255, 0.07);
+      --control-hover: rgba(255, 255, 255, 0.12);
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --radius: 12px;
+      color-scheme: dark;
     }
     html, body {
       margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: black;
-    }
-    #range {
-      position: fixed;
-      top: 8px;
-      left: 8px;
-      z-index: 1;
+      background-color: var(--bg);
+      font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--text);
     }
     #ascii {
       display: block;
       width: 100vw;
       height: 100vh;
     }
+    body.ui-hidden #menu-toggle,
+    body.ui-hidden #panel { display: none; }
+
+    button, select, input { font: inherit; color: inherit; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* Bouton d'ouverture */
+    #menu-toggle {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 2;
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      cursor: pointer;
+      transition: transform 160ms var(--ease-out), background-color 150ms ease;
+    }
+    #menu-toggle:active { transform: scale(0.94); }
+    #menu-toggle svg { transition: transform 200ms var(--ease-out); }
+    #menu-toggle[aria-expanded="true"] svg { transform: rotate(90deg); }
+
+    /* Panneau */
+    #panel {
+      position: fixed;
+      top: 70px;
+      right: 16px;
+      z-index: 2;
+      width: min(300px, calc(100vw - 32px));
+      max-height: calc(100vh - 86px);
+      overflow-y: auto;
+      box-sizing: border-box;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      transform-origin: top right;
+      transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out), visibility 0s linear 0s;
+    }
+    #panel[data-open="false"] {
+      opacity: 0;
+      transform: scale(0.96) translateY(-4px);
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 120ms ease-out, transform 120ms ease-out, visibility 0s linear 120ms;
+    }
+    .section + .section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .label output { color: var(--text); font-variant-numeric: tabular-nums; text-transform: none; }
+
+    input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; height: 24px; }
+    select {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--control);
+      cursor: pointer;
+    }
+    select option { background: #1b1b1e; }
+
+    /* Pastilles de couleur */
+    .swatches { display: flex; justify-content: space-between; gap: 6px; }
+    .swatch {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 160ms var(--ease-out), box-shadow 150ms ease;
+    }
+    .swatch:active { transform: scale(0.92); }
+    .swatch[aria-checked="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text); }
+    .swatch input[type="color"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .swatch-caption { margin-top: 6px; color: var(--muted); font-size: 12px; min-height: 17px; }
+
+    /* Interrupteurs */
+    .toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 40px;
+      cursor: pointer;
+    }
+    .toggle input {
+      appearance: none;
+      width: 40px;
+      height: 24px;
+      margin: 0;
+      border-radius: 12px;
+      background: var(--control-hover);
+      position: relative;
+      cursor: pointer;
+      transition: background-color 150ms ease;
+    }
+    .toggle input::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      transition: transform 180ms var(--ease-out);
+    }
+    .toggle input:checked { background: var(--accent); }
+    .toggle input:checked::after { transform: translateX(16px); }
+
+    /* Actions */
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .action {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--control);
+      cursor: pointer;
+      transition: transform 160ms var(--ease-out), background-color 150ms ease;
+    }
+    .action:active { transform: scale(0.97); }
+    .hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+    kbd {
+      padding: 1px 5px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font: 11px ui-monospace, monospace;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      #menu-toggle:hover, .action:hover { background-color: var(--control-hover); }
+      select:hover { background-color: var(--control-hover); }
+    }
+
+    /* Toast de confirmation */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      z-index: 3;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transform: translate(-50%, 0);
+      transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
+    }
+    #toast[data-visible="false"] { opacity: 0; transform: translate(-50%, 8px); pointer-events: none; }
+
+    #status {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      text-align: center;
+      color: var(--muted);
+    }
+    #status:empty { display: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      #panel, #panel[data-open="false"], #toast, #menu-toggle svg { transition: opacity 150ms ease, visibility 0s; transform: none !important; }
+    }
   </style>
 </head>
 <body>
-  <input type="range" min="2" max="16" id="range" value="16">
-  <video autoplay id="video" style="display: none;"></video>
+  <video autoplay playsinline muted id="video" style="display: none;"></video>
   <canvas id="ascii"></canvas>
+  <div id="status" role="status"></div>
+
+  <button id="menu-toggle" type="button" aria-label="Réglages" aria-expanded="false" aria-controls="panel">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor"/>
+      <line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor"/>
+      <line x1="4" y1="18" x2="20" y2="18"/><circle cx="7" cy="18" r="2" fill="currentColor"/>
+    </svg>
+  </button>
+
+  <aside id="panel" data-open="false" aria-label="Réglages">
+    <div class="section">
+      <label class="label" for="range">Taille des caractères <output id="range-value"></output></label>
+      <input type="range" min="2" max="24" id="range" value="12">
+    </div>
+
+    <div class="section">
+      <label class="label" for="charset">Caractères</label>
+      <select id="charset"></select>
+    </div>
+
+    <div class="section">
+      <div class="label" id="color-label">Couleur</div>
+      <div class="swatches" id="swatches" role="radiogroup" aria-labelledby="color-label"></div>
+      <div class="swatch-caption" id="swatch-caption"></div>
+    </div>
+
+    <div class="section">
+      <div class="label">Effets</div>
+      <label class="toggle">Miroir <input type="checkbox" id="mirror" role="switch"></label>
+      <label class="toggle">Inverser <input type="checkbox" id="invert" role="switch"></label>
+      <label class="toggle">Écran CRT <input type="checkbox" id="crt" role="switch"></label>
+    </div>
+
+    <div class="section">
+      <div class="actions">
+        <button class="action" type="button" id="snapshot">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Photo
+        </button>
+        <button class="action" type="button" id="copy-text">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copier texte
+        </button>
+      </div>
+      <p class="hint"><kbd>M</kbd> menu · <kbd>H</kbd> masquer l'interface · <kbd>P</kbd> photo</p>
+    </div>
+  </aside>
+
+  <div id="toast" role="status" aria-live="polite" data-visible="false"></div>
 </body>
 
 <script src="./index.js"></script>
 <script src="./charlist/braille.js"></script>
+<script src="./charlist/charsets.js"></script>
 <script src="./Ascii.js"></script>
 <script>
   const video = document.getElementById('video')
   const range = document.getElementById('range')
+  const rangeValue = document.getElementById('range-value')
   const asciiCanvas = document.getElementById('ascii')
+  const charsetSelect = document.getElementById('charset')
+  const swatches = document.getElementById('swatches')
+  const swatchCaption = document.getElementById('swatch-caption')
+  const panel = document.getElementById('panel')
+  const menuToggle = document.getElementById('menu-toggle')
+  const toast = document.getElementById('toast')
+  const status = document.getElementById('status')
 
-  // Mesure la taille réelle d'un glyphe braille pour une taille de police donnée
-  function measureCell(size) {
+  const palettes = [
+    { id: 'white', label: 'Blanc', color: '#ffffff' },
+    { id: 'camera', label: 'Couleurs de la caméra', color: 'conic-gradient(#ff5f6d, #ffc371, #7cf29a, #5ab8ff, #c77dff, #ff5f6d)' },
+    { id: 'matrix', label: 'Matrix', color: '#39ff6a' },
+    { id: 'amber', label: 'Ambre', color: '#ffb000' },
+    { id: 'cyan', label: 'Cyan', color: '#4de1ff' },
+    { id: 'custom', label: 'Personnalisée', color: null },
+  ]
+
+  // Réglages, mémorisés d'une visite à l'autre
+  const settings = { size: 12, charset: 'braille', palette: 'white', custom: '#ff4fd8', mirror: true, invert: false, crt: false }
+  try { Object.assign(settings, JSON.parse(localStorage.getItem('settings') || '{}')) } catch {}
+  if (!(settings.charset in charsets)) settings.charset = 'braille'
+  const save = () => { try { localStorage.setItem('settings', JSON.stringify(settings)) } catch {} }
+
+  // Remplissage du menu
+  for (const [id, { label }] of Object.entries(charsets)) charsetSelect.add(new Option(label, id))
+  charsetSelect.value = settings.charset
+  range.value = settings.size
+  rangeValue.textContent = `${settings.size} px`
+  for (const id of ['mirror', 'invert', 'crt']) document.getElementById(id).checked = settings[id]
+
+  for (const p of palettes) {
+    const el = document.createElement('div')
+    el.className = 'swatch'
+    el.setAttribute('role', 'radio')
+    el.setAttribute('aria-label', p.label)
+    el.tabIndex = -1
+    el.dataset.id = p.id
+    el.style.background = p.color || settings.custom
+    if (p.id === 'custom') {
+      // Pastille personnalisée : ouvre le sélecteur de couleur natif
+      const input = document.createElement('input')
+      input.type = 'color'
+      input.value = settings.custom
+      input.setAttribute('aria-label', 'Choisir une couleur')
+      input.oninput = () => {
+        settings.custom = input.value
+        el.style.background = input.value
+        selectPalette('custom')
+      }
+      el.appendChild(input)
+    }
+    el.onclick = () => selectPalette(p.id)
+    el.onkeydown = e => {
+      const i = palettes.findIndex(x => x.id === settings.palette)
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') selectPalette(palettes[(i + 1) % palettes.length].id, true)
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') selectPalette(palettes[(i - 1 + palettes.length) % palettes.length].id, true)
+      else return
+      e.preventDefault()
+    }
+    swatches.appendChild(el)
+  }
+
+  function hexToRgb(hex) {
+    const n = parseInt(hex.slice(1), 16)
+    return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]
+  }
+
+  let ascii
+  function applyColor() {
+    for (const el of swatches.children) {
+      const on = el.dataset.id === settings.palette
+      el.setAttribute('aria-checked', on)
+      el.tabIndex = on ? 0 : -1
+    }
+    const p = palettes.find(x => x.id === settings.palette) || palettes[0]
+    swatchCaption.textContent = p.label
+    if (!ascii) return
+    if (p.id === 'camera') ascii.setOptions({ colorMode: 'camera' })
+    else ascii.setOptions({ colorMode: 'mono', tint: hexToRgb(p.color || settings.custom) })
+  }
+  function selectPalette(id, focus) {
+    settings.palette = id
+    save()
+    applyColor()
+    if (focus) swatches.querySelector(`[data-id="${id}"]`).focus()
+  }
+
+  // Mesure la taille réelle d'une case pour une taille de police donnée,
+  // avec le caractère le plus dense du jeu choisi
+  function measureCell(chars, size) {
     const probe = document.createElement('span')
     probe.style.cssText = `position:absolute;display:inline-block;visibility:hidden;font-family:monospace;line-height:1;white-space:pre;font-size:${size}px`
-    probe.textContent = '\u28ff'.repeat(100)
+    probe.textContent = chars[chars.length - 1].repeat(100)
     document.body.appendChild(probe)
     const { width, height } = probe.getBoundingClientRect()
     probe.remove()
     return { cw: width / 100, ch: height }
   }
 
-  ;(async _ => {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      video.srcObject = await getCamera()
-      const ascii = new Ascii(asciiCanvas, video)
+  function resize() {
+    if (!ascii) return
+    const { chars } = charsets[settings.charset]
+    const { cw, ch } = measureCell(chars, settings.size)
+    ascii.resize(chars, settings.size, cw, ch)
+  }
 
-      // Recalcule la grille selon la taille de caractère choisie au curseur
-      function resize() {
-        const size = Number(range.value)
-        const { cw, ch } = measureCell(size)
-        ascii.resize(size, cw, ch)
-      }
-      resize()
-      range.oninput = resize
-      window.addEventListener('resize', resize)
-      launch(ascii)
-    } else {
-      return console.log('not supported')
+  range.oninput = () => {
+    settings.size = Number(range.value)
+    rangeValue.textContent = `${settings.size} px`
+    save()
+    resize()
+  }
+  charsetSelect.onchange = () => {
+    settings.charset = charsetSelect.value
+    save()
+    resize()
+  }
+  for (const id of ['mirror', 'invert', 'crt']) {
+    document.getElementById(id).onchange = e => {
+      settings[id] = e.target.checked
+      save()
+      ascii && ascii.setOptions({ [id]: settings[id] })
     }
-  })().catch(console.error)
+  }
+  window.addEventListener('resize', resize)
+
+  // Menu
+  function setMenu(open) {
+    panel.dataset.open = open
+    menuToggle.setAttribute('aria-expanded', open)
+  }
+  menuToggle.onclick = () => setMenu(panel.dataset.open !== 'true')
+  asciiCanvas.onclick = () => setMenu(false)
+
+  let toastTimer
+  function showToast(message) {
+    toast.textContent = message
+    toast.dataset.visible = true
+    clearTimeout(toastTimer)
+    toastTimer = setTimeout(() => { toast.dataset.visible = false }, 1800)
+  }
+
+  // Actions
+  async function takeSnapshot() {
+    if (!ascii) return
+    const blob = await ascii.snapshot()
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `asciicam-${new Date().toISOString().replace(/[:.]/g, '-')}.png`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+    showToast('Photo enregistrée')
+  }
+  document.getElementById('snapshot').onclick = takeSnapshot
+  document.getElementById('copy-text').onclick = async () => {
+    if (!ascii) return
+    try {
+      await navigator.clipboard.writeText(ascii.toText())
+      showToast('Texte copié')
+    } catch {
+      showToast('Copie impossible')
+    }
+  }
+
+  // Raccourcis clavier (ignorés quand on tape dans un champ)
+  document.addEventListener('keydown', e => {
+    if (e.target.matches('input, select, textarea') && e.target.type !== 'checkbox' && e.target.type !== 'range') return
+    if (e.metaKey || e.ctrlKey || e.altKey) return
+    const key = e.key.toLowerCase()
+    if (key === 'escape') setMenu(false)
+    else if (key === 'm') setMenu(panel.dataset.open !== 'true')
+    else if (key === 'h') document.body.classList.toggle('ui-hidden')
+    else if (key === 'p') takeSnapshot()
+  })
+
+  ;(async _ => {
+    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+      status.textContent = 'Ce navigateur ne permet pas d\'accéder à la caméra.'
+      return
+    }
+    try {
+      video.srcObject = await getCamera()
+    } catch (e) {
+      status.textContent = 'Accès à la caméra refusé. Autorise-le dans le navigateur puis recharge la page.'
+      return
+    }
+    ascii = new Ascii(asciiCanvas, video)
+    ascii.setOptions({ mirror: settings.mirror, invert: settings.invert, crt: settings.crt })
+    applyColor()
+    resize()
+    launch(ascii)
+  })().catch(e => {
+    console.error(e)
+    status.textContent = 'Impossible de démarrer le rendu : ' + e.message
+  })
+  applyColor()
 </script>
 
 </html>
