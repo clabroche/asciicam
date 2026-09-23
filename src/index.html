@@ -21,17 +21,11 @@
       left: 8px;
       z-index: 1;
     }
-    .char {
-      flex-shrink: 0;
-      width: 1em;
-      height: 1em
-    }
-    .line {
-      display: flex;
-    }
     #ascii {
       display: flex;
       line-height: 1;
+      font-family: monospace;
+      white-space: pre;
       flex-direction: column;
       background-color: black;
       color: white;
@@ -46,38 +40,47 @@
 
 <script src="./index.js"></script>
 <script src="./charlist/braille.js"></script>
-<script src="./Char.js"></script>
 <script src="./Ascii.js"></script>
 <script>
   const video = document.getElementById('video')
   const range = document.getElementById('range')
   const asciiDiv = document.getElementById('ascii')
 
-  // Taille d'un caractère en px selon le curseur, et grille qui couvre tout le viewport
+  // Mesure la taille réelle d'un glyphe braille pour une taille de police donnée
+  function measureCell(size) {
+    const probe = document.createElement('span')
+    probe.style.cssText = `position:absolute;display:inline-block;visibility:hidden;font-family:monospace;line-height:1;white-space:pre;font-size:${size}px`
+    probe.textContent = '\u28ff'.repeat(100)
+    document.body.appendChild(probe)
+    const { width, height } = probe.getBoundingClientRect()
+    probe.remove()
+    return { cw: width / 100, ch: height }
+  }
+
+  // Grille qui couvre tout le viewport, selon la taille de caractère choisie au curseur
   function gridSize() {
     const size = Number(range.value)
-    return {
-      size,
-      cols: Math.ceil(window.innerWidth / size),
-      rows: Math.ceil(window.innerHeight / size),
-    }
+    const { cw, ch } = measureCell(size)
+    const cols = Math.ceil(window.innerWidth / cw)
+    const rows = Math.ceil(window.innerHeight / ch)
+    return { size, cols, rows, aspect: (cols * cw) / (rows * ch) }
   }
 
   ;(async _ => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       video.srcObject = await getCamera()
-      let { size, cols, rows } = gridSize()
-      asciiDiv.style.fontSize = size + 'px'
-      const ascii = new Ascii(cols, rows)
+      let grid = gridSize()
+      asciiDiv.style.fontSize = grid.size + 'px'
+      const ascii = new Ascii(grid.cols, grid.rows)
 
       function resize() {
-        ;({ size, cols, rows } = gridSize())
-        asciiDiv.style.fontSize = size + 'px'
-        if (cols !== ascii.width || rows !== ascii.height) ascii.changeSize(cols, rows)
+        grid = gridSize()
+        asciiDiv.style.fontSize = grid.size + 'px'
+        if (grid.cols !== ascii.width || grid.rows !== ascii.height) ascii.changeSize(grid.cols, grid.rows)
       }
       range.oninput = resize
       window.addEventListener('resize', resize)
-      launch(ascii)
+      launch(ascii, () => grid.aspect)
     } else {
       return console.log('not supported')
     }

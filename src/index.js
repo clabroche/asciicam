@@ -2,41 +2,40 @@ function getCamera() {
   return navigator.mediaDevices.getUserMedia({video: true})
 }
 const virtualCanvas = document.createElement('canvas');
-const ctx = virtualCanvas.getContext("2d");
+const ctx = virtualCanvas.getContext('2d', { willReadFrequently: true });
 /**
  * 
  * @param {Ascii} list 
+ * @param {number} aspect ratio largeur/hauteur de la zone affichée
  */
-function compute(list) {
+function compute(list, aspect) {
   const w = list.width
   const h = list.height
-  virtualCanvas.width = w
-  virtualCanvas.height = h
+  if (virtualCanvas.width !== w) virtualCanvas.width = w
+  if (virtualCanvas.height !== h) virtualCanvas.height = h
   // Recadrage façon "object-fit: cover" pour garder les proportions de la caméra
   const vw = video.videoWidth
   const vh = video.videoHeight
   if (!vw || !vh) return
-  const scale = Math.max(w / vw, h / vh)
-  const sw = w / scale
-  const sh = h / scale
-  ctx.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, w, h);
-  const imageData = ctx.getImageData(0, 0, w, h);
-  var data = imageData.data;
-  for (let y = 0; y < h; y++) {
-    for(let x = 0; x<w; x++) {
-      var n = 4 * (w * y + x);
-      var r = data[n];
-      var g = data[n + 1];
-      var b = data[n + 2];
-      const average = (r + g + b) / 3
-      list.update(x, y, average)
-    }
+  let sw = vw
+  let sh = vw / aspect
+  if (sh > vh) {
+    sh = vh
+    sw = vh * aspect
   }
-  // this.$refs.canvas.getContext('2d').putImageData(imageData, 0, 0);
+  ctx.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, w, h);
+  list.render(ctx.getImageData(0, 0, w, h).data)
 }
 
-async function launch(list) {
-  await this.compute(list)
-  await new Promise(res => setTimeout(() => res(), 50))
-  await this.launch(list)
+function launch(list, getAspect) {
+  // Une image par frame d'écran, et seulement quand la caméra a une nouvelle image
+  let lastTime = -1
+  const loop = () => {
+    if (video.currentTime !== lastTime) {
+      lastTime = video.currentTime
+      compute(list, getAspect())
+    }
+    requestAnimationFrame(loop)
+  }
+  requestAnimationFrame(loop)
 }
