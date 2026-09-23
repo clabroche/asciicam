@@ -1,0 +1,55 @@
+[
+  {
+    "id": "dcddd7c5-42d7-40b8-b4c4-90cab63cc7d8",
+    "orgId": null,
+    "name": "asciicam",
+    "commands": [
+      {
+        "id": "6de272c9-56ce-422d-bd5b-c101ddf91016",
+        "label": "dev",
+        "command": "npm run dev",
+        "shell": true
+      }
+    ],
+    "ports": [
+      2525
+    ],
+    "groups": [],
+    "description": "Serveur Express qui sert l'application Ascii Cam (webcam en ASCII/braille).",
+    "docsPath": "",
+    "url": "http://localhost:2525",
+    "localUrls": [],
+    "openapiUrl": "",
+    "env": {},
+    "envSecrets": [],
+    "runner": "native",
+    "healthCheck": {
+      "type": "http",
+      "path": "/",
+      "method": "GET",
+      "expectedStatus": 200,
+      "interval": 1000,
+      "timeout": 1000,
+      "retries": 3,
+      "initialDelay": 0
+    },
+    "parserIds": [],
+    "shortcuts": [
+      {
+        "id": "95a73302-4583-468a-9336-32d6e4fa98a5",
+        "label": "npm install",
+        "command": "npm install"
+      },
+      {
+        "id": "1bc40ea4-04c0-4d1c-afec-4929860ff8a5",
+        "label": "start (prod)",
+        "command": "npm start"
+      }
+    ],
+    "logSources": [],
+    "autoRestart": false,
+    "restartBackoffMs": 1000,
+    "restartStrategy": "none",
+    "clearLogsOnStart": false
+  }
+]

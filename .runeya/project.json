@@ -1,0 +1,14 @@
+{
+  "id": "4972b067-22cd-4b61-9388-96318db9ca55",
+  "orgId": null,
+  "name": "Ascii Cam",
+  "description": "",
+  "serviceIds": [
+    "dcddd7c5-42d7-40b8-b4c4-90cab63cc7d8"
+  ],
+  "environmentIds": [
+    "8d536b6c-1686-4848-b4b8-d40a50e68177",
+    "53026a09-5eab-4de4-9c7e-d2ee61f40545"
+  ],
+  "groupOrder": []
+}

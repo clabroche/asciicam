@@ -1,1 +1,3 @@
 node_modules
+# Traces des tests navigateur
+.playwright-mcp/

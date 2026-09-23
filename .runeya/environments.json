@@ -1,0 +1,28 @@
+[
+  {
+    "id": "8d536b6c-1686-4848-b4b8-d40a50e68177",
+    "projectId": "4972b067-22cd-4b61-9388-96318db9ca55",
+    "name": "local",
+    "description": "Default local environment (immutable)",
+    "parentIds": [],
+    "variables": {},
+    "scope": "global",
+    "immutable": true,
+    "default": false
+  },
+  {
+    "id": "53026a09-5eab-4de4-9c7e-d2ee61f40545",
+    "projectId": "4972b067-22cd-4b61-9388-96318db9ca55",
+    "name": "asciicam (local)",
+    "description": "",
+    "parentIds": [
+      "8d536b6c-1686-4848-b4b8-d40a50e68177"
+    ],
+    "variables": {},
+    "scope": "service",
+    "reference": "dcddd7c5-42d7-40b8-b4c4-90cab63cc7d8",
+    "activateOn": "8d536b6c-1686-4848-b4b8-d40a50e68177",
+    "immutable": false,
+    "default": false
+  }
+]
