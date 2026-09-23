@@ -22,20 +22,16 @@
       z-index: 1;
     }
     #ascii {
-      display: flex;
-      line-height: 1;
-      font-family: monospace;
-      white-space: pre;
-      flex-direction: column;
-      background-color: black;
-      color: white;
+      display: block;
+      width: 100vw;
+      height: 100vh;
     }
   </style>
 </head>
 <body>
   <input type="range" min="2" max="16" id="range" value="16">
   <video autoplay id="video" style="display: none;"></video>
-  <div id="ascii"></div>
+  <canvas id="ascii"></canvas>
 </body>
 
 <script src="./index.js"></script>
@@ -44,7 +40,7 @@
 <script>
   const video = document.getElementById('video')
   const range = document.getElementById('range')
-  const asciiDiv = document.getElementById('ascii')
+  const asciiCanvas = document.getElementById('ascii')
 
   // Mesure la taille réelle d'un glyphe braille pour une taille de police donnée
   function measureCell(size) {
@@ -57,30 +53,21 @@
     return { cw: width / 100, ch: height }
   }
 
-  // Grille qui couvre tout le viewport, selon la taille de caractère choisie au curseur
-  function gridSize() {
-    const size = Number(range.value)
-    const { cw, ch } = measureCell(size)
-    const cols = Math.ceil(window.innerWidth / cw)
-    const rows = Math.ceil(window.innerHeight / ch)
-    return { size, cols, rows, aspect: (cols * cw) / (rows * ch) }
-  }
-
   ;(async _ => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       video.srcObject = await getCamera()
-      let grid = gridSize()
-      asciiDiv.style.fontSize = grid.size + 'px'
-      const ascii = new Ascii(grid.cols, grid.rows)
+      const ascii = new Ascii(asciiCanvas, video)
 
+      // Recalcule la grille selon la taille de caractère choisie au curseur
       function resize() {
-        grid = gridSize()
-        asciiDiv.style.fontSize = grid.size + 'px'
-        if (grid.cols !== ascii.width || grid.rows !== ascii.height) ascii.changeSize(grid.cols, grid.rows)
+        const size = Number(range.value)
+        const { cw, ch } = measureCell(size)
+        ascii.resize(size, cw, ch)
       }
+      resize()
       range.oninput = resize
       window.addEventListener('resize', resize)
-      launch(ascii, () => grid.aspect)
+      launch(ascii)
     } else {
       return console.log('not supported')
     }
